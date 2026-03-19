@@ -1,0 +1,40 @@
+filter_freq:
+  walking: 6
+  squats: 4
+  STS: 4
+  other: 8
+
+
+
+weights_opt2_walking:
+  reprojection: 100
+  contact_velocity: 1
+  contact_position: 10
+  smoothness_diff: 10
+  flat_floor: 100
+
+
+weights_opt2_squats:
+  reprojection: 50
+  contact_velocity: 1
+  contact_position: 100
+  smoothness_diff: 10
+  flat_floor: 10
+
+
+weights_opt2_sts:
+  reprojection: 250
+  contact_velocity: 1
+  contact_position: 100
+  smoothness_diff: 10
+  flat_floor: 50
+
+
+weights_opt2_other:
+  reprojection: 50
+  contact_velocity: 1
+  contact_position: 100
+  smoothness_diff: 10
+  
+
+
