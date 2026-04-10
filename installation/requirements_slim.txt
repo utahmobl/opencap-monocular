@@ -1,0 +1,50 @@
+# Core numerical / scientific
+# numpy 1.21.6 is required: chumpy uses np.bool/np.int removed in 1.24+, and OpenSim 4.4
+# was built against numpy 1.21. pandas<=2.0.3, scipy<=1.11.4, matplotlib<3.9 are compatible.
+numpy==1.21.6
+pandas==2.0.3
+scipy<1.12
+scikit-image
+joblib
+
+# Deep learning utilities
+timm>=0.9,<1.0
+einops
+smplx
+chumpy
+
+# Computer vision
+opencv-python
+imageio[ffmpeg]
+
+# OpenMMLab (ViTPose) — mmcv-full must be installed via openmim BEFORE this file
+# Run: pip install openmim && mim install "mmcv-full==1.7.2"
+munkres
+xtcocotools>=1.8
+
+# Visualization / UI
+matplotlib>=3.7,<3.9
+plotly
+trimesh
+kornia
+tensorboard
+streamlit
+
+# API / server
+fastapi
+pydantic
+uvicorn
+httpx
+
+# Utilities
+python-decouple
+maskpass
+boto3
+tqdm
+progress
+loguru
+gdown>=4.6.0
+yacs>=0.1.8
+flatten-dict>=0.4.2
+ffmpeg-python
+ultralytics

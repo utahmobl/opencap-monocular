@@ -1,0 +1,166 @@
+# Shared anchors
+x-common-volumes: &common-volumes
+  volumes:
+    - ../:/workspace/opencap-mono
+    - ~/.cache:/root/.cache
+    - ../examples:/workspace/opencap-mono/examples:ro
+    - ../output:/workspace/opencap-mono/output
+
+x-tz: &tz
+  environment:
+    - TZ=America/Denver
+
+x-gpu: &gpu
+  runtime: nvidia
+  environment:
+    - NVIDIA_VISIBLE_DEVICES=all
+    - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    - TZ=America/Denver
+    - VIDEOLLAMA_URL=http://videollama:8400
+  # nvidia-container-runtime doesn't always inject UVM devices — add them explicitly
+  devices:
+    - /dev/nvidia-uvm:/dev/nvidia-uvm
+    - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
+
+x-env-file: &env-file
+  env_file:
+    - ../.env
+
+services:
+  # Development — port 8001 exposed to the host for local debugging
+  mono-api-dev:
+    image: opencap-mono:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "127.0.0.1:8001:8000"
+      - "127.0.0.1:8502:8501"
+    <<: [*common-volumes, *gpu, *env-file]
+    command: api-dev
+
+  # Production — internal only; only the local worker needs to reach it
+  mono-api:
+    image: opencap-mono:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    <<: [*common-volumes, *gpu, *env-file]
+    restart: unless-stopped
+    command: api
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:8000/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 180s
+
+  mono-streamlit:
+    image: opencap-mono:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "127.0.0.1:8503:8501"
+    <<: [*common-volumes, *gpu, *env-file]
+    restart: unless-stopped
+    command: streamlit
+
+  # Log viewer — reads sibling container logs via the Docker socket
+  mono-logs:
+    image: opencap-mono-logs:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.logs
+    ports:
+      - "127.0.0.1:8888:8888"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Use repo deployment/ so log viewer updates without rebuilding the image.
+      - ../deployment:/app/deployment:ro
+    environment:
+      - TZ=America/Denver
+      # Must match actual container names shown by `docker ps`.
+      # Default: docker-mono-api-1 / docker-mono-worker-1 (project name = "docker").
+      - LOGS_API_CONTAINER=docker-mono-api-1
+      - LOGS_WORKER_CONTAINER=docker-mono-worker-1
+      - LOGS_SLACK_CONTAINER=docker-mono-slack-1
+      - LOGS_VIDEOLLAMA_CONTAINER=docker-videollama-1
+    restart: unless-stopped
+
+  # Slack monitor — watches container health and sends Slack alerts
+  mono-slack:
+    image: opencap-mono-logs:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.logs
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    env_file:
+      - ../.env
+    environment:
+      - TZ=America/Denver
+      - MONO_API_URL=http://mono-api:8000/
+      - MONITOR_API_CONTAINER=docker-mono-api-1
+      - MONITOR_WORKER_CONTAINER=docker-mono-worker-1
+    restart: unless-stopped
+    depends_on:
+      - mono-api
+    command: python deployment/slack/slack_monitor.py
+
+  # VideoLLaMA3 — activity classification from video (port 8400, localhost only)
+  # Excluded from default builds/up — run with: docker compose --profile videollama <cmd>
+  videollama:
+    profiles: [videollama]
+    image: videollama3:latest
+    build:
+      context: ../../VideoLLaMA3
+      dockerfile: Dockerfile
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - TZ=America/Denver
+      # Reduces OOM from fragmented VRAM blocks during inference
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    devices:
+      - /dev/nvidia-uvm:/dev/nvidia-uvm
+      - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
+    volumes:
+      - ../../VideoLLaMA3:/workspace/VideoLLaMA3
+      - ~/.cache:/root/.cache
+      # Read-only access to the same Data directory the API writes into,
+      # so video paths are identical in both containers.
+      - ../Data:/workspace/opencap-mono/Data:ro
+    ports:
+      - "127.0.0.1:8400:8400"
+    restart: unless-stopped
+
+  # Worker — MONO_API_URL overridden to use Docker service name (not localhost)
+  mono-worker:
+    image: opencap-mono:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - MONO_API_URL=http://mono-api:8000/
+      - TZ=America/Denver
+    env_file:
+      - ../.env
+    devices:
+      - /dev/nvidia-uvm:/dev/nvidia-uvm
+      - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
+    volumes:
+      - ../:/workspace/opencap-mono
+      - ~/.cache:/root/.cache
+      - ../examples:/workspace/opencap-mono/examples:ro
+      - ../output:/workspace/opencap-mono/output
+      - /data:/data
+    restart: unless-stopped
+    depends_on:
+      mono-api:
+        condition: service_healthy
+    command: worker
