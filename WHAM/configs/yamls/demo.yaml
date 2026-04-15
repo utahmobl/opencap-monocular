@@ -1,0 +1,14 @@
+LOGDIR: ''
+DEVICE: 'cuda'
+EXP_NAME: 'demo'
+OUTPUT_DIR: 'experiments/'
+NUM_WORKERS: 0
+MODEL_CONFIG: 'WHAM/configs/yamls/model_base.yaml'
+FLIP_EVAL: True
+
+TRAIN:
+  STAGE: 'stage2'
+  CHECKPOINT: 'WHAM/checkpoints/wham_vit_bedlam_w_3dpw.pth.tar'
+
+MODEL:
+  BACKBONE: 'vit'

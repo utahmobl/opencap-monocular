@@ -1,0 +1,78 @@
+# ── Large data / model weight directories ────────────────────────────────────
+# These are mounted as volumes at runtime or downloaded on first use.
+output/
+models/
+results/
+jump/
+examples/
+sample_videos/
+data/
+LabValidation_withVideos1/
+sts_kinetics_validation/
+analysis_results/
+demos/
+
+# WHAM model checkpoints and training dataset (several GB each)
+WHAM/checkpoints/
+WHAM/dataset/
+WHAM/dataset.zip
+
+# DPVO submodule — not installed in slim build
+WHAM/third-party/DPVO/
+
+# third_party_modified data folder (3.8GB model data)
+third_party_modified/ipman/data/
+
+# opencap runtime data (videos, sessions)
+opencap/Data/
+
+# ── Secrets — never bake into the image ──────────────────────────────────────
+.env
+
+# ── Video files ───────────────────────────────────────────────────────────────
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.zip
+
+# ── Python cache ──────────────────────────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ── Virtual envs / eggs ───────────────────────────────────────────────────────
+.venv/
+env/
+venv/
+.eggs/
+*.egg-info/
+*.egg
+
+# ── IDE / OS ──────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# ── Git ───────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.gitmodules
+
+# ── Logs / databases ──────────────────────────────────────────────────────────
+*.log
+*.sqlite
+logs/
+
+# ── Build artifacts ───────────────────────────────────────────────────────────
+build/
+dist/
+*.o
+*.obj
+tmp/
+temp/
