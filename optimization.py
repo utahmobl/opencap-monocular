@@ -237,10 +237,14 @@ def run_optimization(
         print(e)
         breakpoint()
 
-    # Get 2D keypoints from OpenPose
+    # Get 2D keypoints from OpenPose. Filtering is deferred until after the
+    # activity is detected below, so that the activity-specific cutoff
+    # frequency (params/parameters.yaml) is actually applied to the keypoints
+    # used in the reprojection loss, instead of always using the function's
+    # default `filter_freq`.
     key2d = ut.get_openpose_keypoints(
         wham_result["tracking_results_for_reproj"]["keypoints"],
-        filter_freq=filter_freq,
+        filter_freq=None,
         sample_rate=frame_rate,
         device=device,
     )
@@ -477,6 +481,15 @@ def run_optimization(
             if predicted_activity is None:
                 predicted_activity = "other"
                 activity_detection_method = "fallback_other"
+
+    # Now that the activity (and therefore the correct cutoff frequency) is
+    # known, apply the low-pass Butterworth filter to the 2D keypoints used in
+    # the reprojection loss of both optimization stages below.
+    logger.info(f"Filtering 2D keypoints at {filter_freq} Hz cutoff.")
+    key2d_xy_filtered = ut.filter_2d_keypoints(
+        key2d.cpu().numpy()[:, :, :2], 4, filter_freq, frame_rate
+    )
+    key2d[:, :, :2] = torch.from_numpy(key2d_xy_filtered).to(device)
 
     # Optimization 1: Camera extrinsics
     logger.info("Optimizing extrinsics.")
