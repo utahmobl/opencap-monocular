@@ -1,0 +1,9 @@
+# Minimal subject metadata for CI / docker smoke_inference.sh
+gender_mf: Man
+height_m: 1.82
+iphoneModel:
+  Cam0: iPhone13,3
+isMono: true
+mass_kg: 69.0
+openSimModel: LaiUhlrich2022
+subjectID: smoke

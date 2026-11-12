@@ -1,0 +1,27 @@
+# Minimal image shared by the log viewer and slack monitor.
+# No GPU / no conda — just Python + a handful of packages + Docker CLI.
+FROM python:3.9-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Docker CLI only (no daemon) — used to call `docker logs` / `docker inspect`
+RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-27.5.1.tgz \
+    | tar -xz --strip-components=1 -C /usr/local/bin docker/docker
+
+RUN pip install --no-cache-dir \
+    flask==3.0.3 \
+    requests \
+    psutil \
+    loguru \
+    python-decouple
+
+WORKDIR /app
+COPY deployment/ /app/deployment/
+
+EXPOSE 8888
+
+# Default: run the log viewer. Override CMD in docker-compose for the slack monitor.
+CMD ["python", "deployment/lib/log_viewer.py"]

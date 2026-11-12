@@ -1,0 +1,54 @@
+name: 'test'
+run_eval_h36m: False
+run_eval_rich_val: False
+run_eval_rich_test: False
+run_eval_3dpw: False
+
+resume: False
+num_workers: 16
+pin_memory: True
+
+log_dir: 'logs'
+checkpoint: None
+pretrained_checkpoint: 'data/model_checkpoint.pt'
+num_epochs: 200
+lr: 1e-5
+
+# IP LOSS PARAMETERS
+cop_w: 10.
+cop_k: 100.
+in_alpha1: 1.
+in_alpha2: 0.5
+out_alpha1: 1.
+out_alpha2: 0.15
+contact_thresh: [0.1]
+
+batch_size: 64
+summary_steps: 100
+test_steps: 1000
+checkpoint_steps: 6000
+
+img_res: 224
+rot_factor: 30
+noise_factor: 0.4
+scale_factor: 0.25
+ignore_3d: False
+is_agora: False
+is_others: False
+
+#LOSSES
+shape_loss_weight: 0
+keypoint_loss_weight: 5.
+pose_loss_weight: 1.
+beta_loss_weight: 0.001
+stability_loss_weight: [0.01]
+inside_push_loss_weight: [0.1]
+outside_pull_loss_weight: [0.01]
+openpose_train_weight: 0.
+gt_train_weight: 1.
+
+run_smplify: False
+smplify_threshold: 100.
+num_smplify_iters: 100
+
+shuffle_train: True
